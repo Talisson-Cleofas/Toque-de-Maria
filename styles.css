@@ -320,9 +320,9 @@ h1,h2,h3,h4 {
 .hero-quote {
   position: absolute;
   right: 7.5vw;
-  top: 126px;
+  top: 102px;
   z-index: 3;
-  color: #0d66b7;
+  color: #dfdfdf;
   font: italic 38px/1.06 'Cormorant Garamond',serif;
   text-align: center;
   text-shadow: 0 2px 15px rgba(255,255,255,.7)
