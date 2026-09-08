@@ -543,8 +543,7 @@ Podemos confirmar disponibilidade, prazo e entrega?`),
 
         const items = cart
           .map(item => `• ${item.qty}x ${item.name}`)
-          .join('
-');
+          .join('\\n');
 
         const notes = $('#notes').value.trim();
 
