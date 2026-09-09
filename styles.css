@@ -1581,6 +1581,17 @@ body.admin-authenticated .admin-only {
 
   .lead {
     max-width: 92%;
+    background: linear-gradient(
+      90deg,
+      rgba(255,255,255,.94) 0%,
+      rgba(255,255,255,.88) 72%,
+      rgba(255,255,255,.58) 100%
+    );
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+    border-radius: 14px;
+    padding: 8px 10px;
+    margin-left: -10px;
   }
 
   .hero-actions {
