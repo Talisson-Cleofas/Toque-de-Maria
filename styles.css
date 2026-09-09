@@ -1220,14 +1220,21 @@ body.admin-authenticated .admin-only {
   }
 
   .hero:after {
-    background: linear-gradient(
-      180deg,
-      rgba(255,255,255,.98) 0%,
-      rgba(255,255,255,.95) 34%,
-      rgba(255,255,255,.78) 54%,
-      rgba(255,255,255,.28) 75%,
-      rgba(255,255,255,.06) 100%
-    );
+    background:
+      linear-gradient(
+        90deg,
+        rgba(255,255,255,.98) 0%,
+        rgba(255,255,255,.96) 38%,
+        rgba(255,255,255,.72) 56%,
+        rgba(255,255,255,.28) 72%,
+        rgba(255,255,255,.08) 100%
+      ),
+      linear-gradient(
+        180deg,
+        rgba(255,255,255,.38) 0%,
+        rgba(255,255,255,.14) 42%,
+        rgba(255,255,255,.04) 100%
+      );
   }
 
   .hero-inner {
@@ -1237,8 +1244,8 @@ body.admin-authenticated .admin-only {
   }
 
   .hero-copy {
-    width: 100%;
-    max-width: 560px;
+    width: min(76%, 500px);
+    max-width: 500px;
     padding-top: 0;
   }
 
@@ -1535,7 +1542,25 @@ body.admin-authenticated .admin-only {
   }
 
   .hero-bg {
-    object-position: 72% 8%;
+    object-position: 76% 8%;
+  }
+
+  .hero:after {
+    background:
+      linear-gradient(
+        90deg,
+        rgba(255,255,255,.99) 0%,
+        rgba(255,255,255,.97) 42%,
+        rgba(255,255,255,.70) 58%,
+        rgba(255,255,255,.22) 74%,
+        rgba(255,255,255,.04) 100%
+      ),
+      linear-gradient(
+        180deg,
+        rgba(255,255,255,.28) 0%,
+        rgba(255,255,255,.08) 46%,
+        rgba(255,255,255,0) 100%
+      );
   }
 
   .hero-inner {
@@ -1543,8 +1568,13 @@ body.admin-authenticated .admin-only {
     padding: 24px 16px 20px;
   }
 
+  .hero-copy {
+    width: 74%;
+    max-width: 420px;
+  }
+
   .hero h1 {
-    font-size: clamp(40px, 12.5vw, 52px);
+    font-size: clamp(38px, 11.7vw, 50px);
   }
 
   .lead {
