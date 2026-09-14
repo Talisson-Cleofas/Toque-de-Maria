@@ -601,6 +601,7 @@
             if (digits) WA = digits;
             return;
           }
+          if (def.special === 'dynamic') return;
           document.querySelectorAll(def.selector).forEach((element) => {
             element.textContent = siteContent[def.key];
           });
