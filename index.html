@@ -261,7 +261,11 @@
           </div>
 
           <div class="admin-private" id="adminPrivate">
-            <div class="admin-wrap">
+            <div class="admin-tabs" role="tablist" aria-label="Seções administrativas">
+              <button class="admin-tab active" id="tabProducts" type="button">Produtos</button>
+              <button class="admin-tab" id="tabContent" type="button">Textos e imagens</button>
+            </div>
+            <div class="admin-wrap admin-view active" id="productsEditor">
               <div>
                 <form class="admin-panel open" id="adminPanel">
                   <input type="hidden" id="pid" />
@@ -342,7 +346,7 @@
               </div>
             </div>
 
-            <section class="site-editor">
+            <section class="site-editor admin-view" id="contentEditor">
               <div class="site-editor-head">
                 <div>
                   <p class="eyebrow">CONTEÚDO DO SITE</p>
@@ -1104,6 +1108,18 @@ Detalhes: ${details}` : ''}`;
         $('#pimage').value = '';
         updateImagePreview('');
       };
+
+      function openAdminTab(tab) {
+        const showContent = tab === 'content';
+        $('#productsEditor').classList.toggle('active', !showContent);
+        $('#contentEditor').classList.toggle('active', showContent);
+        $('#tabProducts').classList.toggle('active', !showContent);
+        $('#tabContent').classList.toggle('active', showContent);
+        if (showContent) renderContentEditor();
+      }
+
+      $('#tabProducts').onclick = () => openAdminTab('products');
+      $('#tabContent').onclick = () => openAdminTab('content');
 
       $('#siteContentForm').onsubmit = async (event) => {
         event.preventDefault();
