@@ -20,7 +20,7 @@
       href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Montserrat:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=20260914-marketplace" />
+    <link rel="stylesheet" href="styles.css?v=20260914-categories" />
   </head>
   <body>
     <div class="topbar">
@@ -105,36 +105,45 @@
         </div>
         <div class="category-grid">
           <article class="category-card">
-            <div class="category-photo cat1"></div>
+            <div class="category-photo cat1" data-category-cover="tercos">
+              <div class="category-placeholder"><small>COLEÇÃO</small><strong>Terços</strong></div>
+              <span class="category-kicker">Feitos à mão</span>
+            </div>
             <div class="category-body">
-              <div class="cat-icon">◌</div>
-              <div>
+              <div class="category-copy">
+                <span class="category-number">01</span>
                 <h3>Terços</h3>
-                <p>Tradição, beleza e espiritualidade.</p>
+                <p>Peças artesanais para acompanhar sua oração.</p>
               </div>
-              <a class="round-link" href="#catalogo">›</a>
+              <a class="round-link" href="#catalogo" aria-label="Explorar terços">Explorar <span>→</span></a>
             </div>
           </article>
           <article class="category-card">
-            <div class="category-photo cat2"></div>
+            <div class="category-photo cat2" data-category-cover="artigos">
+              <div class="category-placeholder"><small>DEVOÇÃO</small><strong>Artigos de fé</strong></div>
+              <span class="category-kicker">Para seu lar</span>
+            </div>
             <div class="category-body">
-              <div class="cat-icon">⛪</div>
-              <div>
+              <div class="category-copy">
+                <span class="category-number">02</span>
                 <h3>Artigos Religiosos</h3>
-                <p>Imagens, medalhas, chaveiros e muito mais.</p>
+                <p>Detalhes que tornam a fé presente no dia a dia.</p>
               </div>
-              <a class="round-link" href="#catalogo">›</a>
+              <a class="round-link" href="#catalogo" aria-label="Explorar artigos religiosos">Explorar <span>→</span></a>
             </div>
           </article>
           <article class="category-card">
-            <div class="category-photo cat3"></div>
+            <div class="category-photo cat3" data-category-cover="personalizados">
+              <div class="category-placeholder"><small>EXCLUSIVOS</small><strong>Sua história</strong></div>
+              <span class="category-kicker">Criado para você</span>
+            </div>
             <div class="category-body">
-              <div class="cat-icon">🎁</div>
-              <div>
+              <div class="category-copy">
+                <span class="category-number">03</span>
                 <h3>Personalizados</h3>
-                <p>Sua fé de um jeito único e especial.</p>
+                <p>Presentes únicos, feitos para momentos especiais.</p>
               </div>
-              <a class="round-link" href="#personalizados">›</a>
+              <a class="round-link" href="#personalizados" aria-label="Conhecer personalizados">Explorar <span>→</span></a>
             </div>
           </article>
         </div>
@@ -442,6 +451,7 @@
         } catch (error) {
           console.warn('Não foi possível manter a cópia local do catálogo.', error);
         }
+        renderCategoryCards();
         renderProducts();
         renderAdmin();
       }
@@ -548,6 +558,28 @@
           console.error('Falha ao migrar catálogo local.', error);
           throw new Error('Não foi possível enviar os produtos antigos ao banco.');
         }
+      }
+
+      function renderCategoryCards() {
+        const categories = {
+          tercos: { eyebrow: 'COLEÇÃO', kicker: 'Feitos à mão', fallback: 'Terços' },
+          artigos: { eyebrow: 'DEVOÇÃO', kicker: 'Para seu lar', fallback: 'Artigos de fé' },
+          personalizados: { eyebrow: 'EXCLUSIVOS', kicker: 'Criado para você', fallback: 'Sua história' }
+        };
+
+        document.querySelectorAll('[data-category-cover]').forEach((cover) => {
+          const category = cover.dataset.categoryCover;
+          const config = categories[category];
+          const featured = products.find((product) => product.cat === category && product.image);
+
+          cover.classList.toggle('has-category-image', Boolean(featured));
+          cover.innerHTML = featured
+            ? `<img src="${featured.image}" alt="${esc(featured.name)}" loading="lazy">
+               <span class="category-image-shade"></span>
+               <span class="category-kicker">${config.kicker}</span>`
+            : `<div class="category-placeholder"><small>${config.eyebrow}</small><strong>${config.fallback}</strong></div>
+               <span class="category-kicker">${config.kicker}</span>`;
+        });
       }
 
       function renderProducts() {
@@ -943,6 +975,7 @@ Detalhes: ${details}` : ''}`;
         }
       }
 
+      renderCategoryCards();
       renderProducts();
       renderCart();
       renderAdmin();
