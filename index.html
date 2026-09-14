@@ -228,6 +228,15 @@
           <div class="admin-login-wrap" id="adminLoginWrap">
             <div class="admin-gate" id="adminGate">
               <label>
+                E-mail administrativo
+                <input
+                  type="email"
+                  id="adminEmail"
+                  placeholder="Digite o e-mail"
+                  autocomplete="username"
+                />
+              </label>
+              <label>
                 Senha do painel
                 <input
                   type="password"
@@ -368,8 +377,12 @@
       const WA = '5562993580287';
       const KEY = 'tm_products_v4';
       const LEGACY_KEY = 'tm_products_v3';
-      const PIN = 'toque2026';
-      const ADMIN_SESSION = 'tm_admin_session';
+      const SUPABASE_URL = 'https://ymtglrjcuwpzyvepvwwt.supabase.co';
+      const SUPABASE_KEY = 'sb_publishable_MC2IyQeksJc1zp4gqW1UYw_JkhMZJAl';
+      const ADMIN_EMAIL = 'rruthmaria28@gmail.com';
+      const ADMIN_SESSION = 'tm_admin_access_token';
+      const LOCAL_MIGRATION = 'tm_products_supabase_migrated_v1';
+      const localCatalogAtStart = localStorage.getItem(KEY);
 
       const defaults = [
         {id:1,name:'Terço de Pérolas',desc:'Nossa Senhora Aparecida',price:'R$ 49,90',cat:'tercos',badge:'Mais vendido',image:''},
@@ -427,15 +440,126 @@
         try {
           localStorage.setItem(KEY, JSON.stringify(products));
         } catch (error) {
-          if (error && (error.name === 'QuotaExceededError' || error.code === 22)) {
-            alert('A imagem deixou o armazenamento do navegador cheio. Tente uma imagem menor.');
-            throw error;
-          }
-          throw error;
+          console.warn('Não foi possível manter a cópia local do catálogo.', error);
         }
-
         renderProducts();
         renderAdmin();
+      }
+
+      const apiHeaders = (token = '') => ({
+        apikey: SUPABASE_KEY,
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      });
+
+      const fromDatabase = (p) => ({
+        id: Number(p.id),
+        name: p.name,
+        desc: p.description || '',
+        price: p.price || '',
+        cat: p.category || 'tercos',
+        badge: p.badge || '',
+        image: p.image || ''
+      });
+
+      const toDatabase = (p, index = 0) => ({
+        id: Number(p.id),
+        name: p.name,
+        description: p.desc || '',
+        price: p.price || '',
+        category: p.cat || 'tercos',
+        badge: p.badge || '',
+        image: p.image || '',
+        sort_order: index,
+        active: true
+      });
+
+      async function databaseRequest(path, options = {}) {
+        const response = await fetch(`${SUPABASE_URL}${path}`, options);
+        const data = response.status === 204 ? null : await response.json().catch(() => null);
+        if (!response.ok) {
+          throw new Error(data?.message || data?.error_description || data?.error || 'Falha ao sincronizar com o banco.');
+        }
+        return data;
+      }
+
+      async function loadProductsFromDatabase() {
+        try {
+          const rows = await databaseRequest('/rest/v1/tm_products?select=*&active=eq.true&order=sort_order.asc,id.asc', {
+            headers: apiHeaders()
+          });
+          if (Array.isArray(rows)) {
+            products = rows.map(fromDatabase);
+            saveProducts();
+          }
+        } catch (error) {
+          console.error(error);
+          alert('Não foi possível atualizar o catálogo agora. Exibindo a última cópia disponível.');
+        }
+      }
+
+      async function authenticateAdmin(email, password) {
+        if (email.toLowerCase() !== ADMIN_EMAIL) {
+          throw new Error('E-mail administrativo não autorizado.');
+        }
+
+        let response = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+          method: 'POST',
+          headers: apiHeaders(),
+          body: JSON.stringify({ email, password })
+        });
+        let data = await response.json().catch(() => ({}));
+
+        if (!response.ok && /invalid login credentials/i.test(data.error_description || data.msg || '')) {
+          response = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
+            method: 'POST',
+            headers: apiHeaders(),
+            body: JSON.stringify({ email, password })
+          });
+          data = await response.json().catch(() => ({}));
+          if (response.ok && !data.access_token) {
+            throw new Error('Enviamos uma confirmação para esse e-mail. Confirme a mensagem recebida e depois entre novamente.');
+          }
+        }
+
+        if (!response.ok || !data.access_token) {
+          throw new Error(data.error_description || data.msg || 'E-mail ou senha incorretos.');
+        }
+        return data.access_token;
+      }
+
+      async function upsertProductInDatabase(product, token, index = 0) {
+        return databaseRequest('/rest/v1/tm_products?on_conflict=id', {
+          method: 'POST',
+          headers: {
+            ...apiHeaders(token),
+            Prefer: 'resolution=merge-duplicates,return=representation'
+          },
+          body: JSON.stringify(toDatabase(product, index))
+        });
+      }
+
+      async function deleteProductFromDatabase(id, token) {
+        return databaseRequest(`/rest/v1/tm_products?id=eq.${encodeURIComponent(id)}`, {
+          method: 'DELETE',
+          headers: { ...apiHeaders(token), Prefer: 'return=minimal' }
+        });
+      }
+
+      async function migrateLocalCatalog(token) {
+        if (localStorage.getItem(LOCAL_MIGRATION) === '1' || !localCatalogAtStart) return;
+        try {
+          const localItems = JSON.parse(localCatalogAtStart);
+          if (Array.isArray(localItems)) {
+            for (let index = 0; index < localItems.length; index++) {
+              await upsertProductInDatabase(localItems[index], token, index);
+            }
+          }
+          localStorage.setItem(LOCAL_MIGRATION, '1');
+        } catch (error) {
+          console.error('Falha ao migrar catálogo local.', error);
+          throw new Error('Não foi possível enviar os produtos antigos ao banco.');
+        }
       }
 
       function renderProducts() {
@@ -606,8 +730,8 @@ Detalhes: ${details}` : ''}`;
         $('#admin').setAttribute('aria-hidden', 'false');
       }
 
-      function unlockAdmin() {
-        sessionStorage.setItem(ADMIN_SESSION, '1');
+      async function unlockAdmin(accessToken) {
+        sessionStorage.setItem(ADMIN_SESSION, accessToken);
         document.body.classList.add('admin-authenticated');
         showAdminArea();
         $('#adminLoginWrap').style.display = 'none';
@@ -620,6 +744,7 @@ Detalhes: ${details}` : ''}`;
         document.body.classList.remove('admin-authenticated');
         $('#adminPrivate').classList.remove('open');
         $('#adminLoginWrap').style.display = 'block';
+        $('#adminEmail').value = '';
         $('#adminPin').value = '';
         renderAdmin();
 
@@ -687,12 +812,24 @@ Detalhes: ${details}` : ''}`;
         });
       }
 
-      $('#unlockAdmin').onclick = () => {
-        if ($('#adminPin').value !== PIN) {
-          return alert('Senha incorreta.');
+      $('#unlockAdmin').onclick = async () => {
+        const button = $('#unlockAdmin');
+        button.disabled = true;
+        button.textContent = 'Entrando...';
+        try {
+          const token = await authenticateAdmin(
+            $('#adminEmail').value.trim(),
+            $('#adminPin').value
+          );
+          await migrateLocalCatalog(token);
+          await loadProductsFromDatabase();
+          await unlockAdmin(token);
+        } catch (error) {
+          alert(error.message || 'Não foi possível entrar.');
+        } finally {
+          button.disabled = false;
+          button.textContent = 'Entrar';
         }
-
-        unlockAdmin();
       };
 
       $('#adminPin').addEventListener('keydown', (event) => {
@@ -729,7 +866,7 @@ Detalhes: ${details}` : ''}`;
         updateImagePreview('');
       };
 
-      $('#adminPanel').onsubmit = (event) => {
+      $('#adminPanel').onsubmit = async (event) => {
         event.preventDefault();
 
         const id =
@@ -753,11 +890,15 @@ Detalhes: ${details}` : ''}`;
           : [...products, product];
 
         try {
-          saveProducts();
+          const token = sessionStorage.getItem(ADMIN_SESSION);
+          if (!token) throw new Error('Sua sessão terminou. Entre novamente.');
+          await upsertProductInDatabase(product, token, products.findIndex(p => p.id === id));
+          await loadProductsFromDatabase();
           clearAdminForm();
-          alert(existing ? 'Produto atualizado.' : 'Produto adicionado.');
+          alert(existing ? 'Produto atualizado e sincronizado.' : 'Produto adicionado e sincronizado.');
         } catch (error) {
           console.error(error);
+          alert(error.message || 'Não foi possível salvar o produto.');
         }
       };
 
@@ -779,29 +920,31 @@ Detalhes: ${details}` : ''}`;
         $('#admin').scrollIntoView({behavior:'smooth', block:'start'});
       };
 
-      window.delP = (id) => {
+      window.delP = async (id) => {
         if (!confirm('Excluir este produto?')) return;
-
-        products = products.filter(p => p.id !== id);
-
         try {
-          saveProducts();
+          const token = sessionStorage.getItem(ADMIN_SESSION);
+          if (!token) throw new Error('Sua sessão terminou. Entre novamente.');
+          await deleteProductFromDatabase(id, token);
+          await loadProductsFromDatabase();
           clearAdminForm();
         } catch (error) {
           console.error(error);
+          alert(error.message || 'Não foi possível excluir o produto.');
         }
       };
 
       // Área Admin invisível para visitantes comuns.
       const params = new URLSearchParams(location.search);
       const adminRequested = params.get('admin') === '1';
-      const hasAdminSession = sessionStorage.getItem(ADMIN_SESSION) === '1';
+      const savedAdminToken = sessionStorage.getItem(ADMIN_SESSION);
+      const hasAdminSession = Boolean(savedAdminToken);
 
       if (adminRequested || hasAdminSession) {
         showAdminArea();
 
         if (hasAdminSession) {
-          unlockAdmin();
+          unlockAdmin(savedAdminToken);
         } else {
           $('#adminLoginWrap').style.display = 'block';
           $('#adminPrivate').classList.remove('open');
@@ -815,6 +958,7 @@ Detalhes: ${details}` : ''}`;
       renderProducts();
       renderCart();
       renderAdmin();
+      loadProductsFromDatabase();
     </script>
   </body>
 </html>
