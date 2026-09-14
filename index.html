@@ -428,6 +428,14 @@
         {key:'hero_title',label:'Título principal',selector:'.hero-copy h1'},
         {key:'hero_description',label:'Descrição principal',selector:'.hero-copy .lead',multiline:true},
         {key:'hero_quote',label:'Frase ao lado da imagem principal',selector:'.hero-quote',multiline:true},
+        {key:'hero_primary_button',label:'Botão principal da abertura',selector:'.hero-actions a:nth-child(1)'},
+        {key:'hero_secondary_button',label:'Botão de WhatsApp da abertura',selector:'.hero-actions a:nth-child(2)'},
+        {key:'benefit_1_title',label:'Benefício 1: título',selector:'.benefit:nth-child(1) b'},
+        {key:'benefit_1_description',label:'Benefício 1: legenda',selector:'.benefit:nth-child(1) small'},
+        {key:'benefit_2_title',label:'Benefício 2: título',selector:'.benefit:nth-child(2) b'},
+        {key:'benefit_2_description',label:'Benefício 2: legenda',selector:'.benefit:nth-child(2) small'},
+        {key:'benefit_3_title',label:'Benefício 3: título',selector:'.benefit:nth-child(3) b'},
+        {key:'benefit_3_description',label:'Benefício 3: legenda',selector:'.benefit:nth-child(3) small'},
         {key:'categories_title',label:'Título da seção de categorias',selector:'#categorias .section-title h2'},
         {key:'categories_subtitle',label:'Legenda da seção de categorias',selector:'#categorias .section-title p'},
         {key:'category_tercos_label',label:'Terços: texto sobre a imagem',selector:'[data-category-cover="tercos"] .category-kicker'},
@@ -451,6 +459,14 @@
         {key:'custom_eyebrow',label:'Personalizados: destaque',selector:'#personalizados .custom-copy .eyebrow'},
         {key:'custom_title',label:'Personalizados: título da seção',selector:'#personalizados .custom-copy h2'},
         {key:'custom_description',label:'Personalizados: descrição',selector:'#personalizados .custom-copy > p:not(.eyebrow)',multiline:true},
+        {key:'custom_item_1',label:'Personalizados: item 1',selector:'#personalizados .custom-copy li:nth-child(1)'},
+        {key:'custom_item_2',label:'Personalizados: item 2',selector:'#personalizados .custom-copy li:nth-child(2)'},
+        {key:'custom_item_3',label:'Personalizados: item 3',selector:'#personalizados .custom-copy li:nth-child(3)'},
+        {key:'custom_item_4',label:'Personalizados: item 4',selector:'#personalizados .custom-copy li:nth-child(4)'},
+        {key:'custom_form_button',label:'Botão de orçamento personalizado',selector:'#customForm button[type="submit"]'},
+        {key:'cart_checkout_button',label:'Botão de finalizar pedido',selector:'#checkout'},
+        {key:'product_whatsapp_label',label:'Botão do produto: WhatsApp',special:'dynamic',default:'💬 Pedir pelo WhatsApp'},
+        {key:'product_add_label',label:'Botão do produto: adicionar',special:'dynamic',default:'＋ Adicionar ao pedido'},
         {key:'footer_quote',label:'Frase do rodapé',selector:'.footer-quote',multiline:true},
         {key:'footer_social_title',label:'Rodapé: título de contato',selector:'.footer-inner > div:last-child h3'},
         {key:'footer_instagram',label:'Rodapé: Instagram',selector:'.footer-inner > div:last-child p:nth-of-type(1)'},
@@ -572,6 +588,7 @@
 
       function readCurrentContent(def) {
         if (def.special === 'whatsapp') return WA;
+        if (def.special === 'dynamic') return def.default || '';
         const element = document.querySelector(def.selector);
         return element ? element.textContent.trim().replace(/\s+/g, ' ') : '';
       }
@@ -797,10 +814,10 @@
               <div class="price">${esc(p.price)}</div>
               <div class="product-actions">
                 <button class="pbtn whatsapp" onclick="direct(${p.id})">
-                  💬 Pedir pelo WhatsApp
+                  ${esc(siteContent.product_whatsapp_label || '💬 Pedir pelo WhatsApp')}
                 </button>
                 <button class="pbtn add" onclick="add(${p.id})">
-                  ＋ Adicionar ao pedido
+                  ${esc(siteContent.product_add_label || '＋ Adicionar ao pedido')}
                 </button>
               </div>
             </div>
