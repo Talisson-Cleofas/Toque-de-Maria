@@ -503,27 +503,15 @@
           throw new Error('E-mail administrativo não autorizado.');
         }
 
-        let response = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+        const response = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
           method: 'POST',
           headers: apiHeaders(),
           body: JSON.stringify({ email, password })
         });
-        let data = await response.json().catch(() => ({}));
-
-        if (!response.ok && /invalid login credentials/i.test(data.error_description || data.msg || '')) {
-          response = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
-            method: 'POST',
-            headers: apiHeaders(),
-            body: JSON.stringify({ email, password })
-          });
-          data = await response.json().catch(() => ({}));
-          if (response.ok && !data.access_token) {
-            throw new Error('Enviamos uma confirmação para esse e-mail. Confirme a mensagem recebida e depois entre novamente.');
-          }
-        }
+        const data = await response.json().catch(() => ({}));
 
         if (!response.ok || !data.access_token) {
-          throw new Error(data.error_description || data.msg || 'E-mail ou senha incorretos.');
+          throw new Error('E-mail ou senha incorretos.');
         }
         return data.access_token;
       }
