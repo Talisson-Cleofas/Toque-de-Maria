@@ -20,7 +20,7 @@
       href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Montserrat:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=20260914-categories" />
+    <link rel="stylesheet" href="styles.css?v=20260914-cms" />
   </head>
   <body>
     <div class="topbar">
@@ -341,6 +341,25 @@
                 <div class="admin-list" id="adminList"></div>
               </div>
             </div>
+
+            <section class="site-editor">
+              <div class="site-editor-head">
+                <div>
+                  <p class="eyebrow">CONTEÚDO DO SITE</p>
+                  <h3>Editar textos e imagens</h3>
+                  <p>Personalize a vitrine sem precisar alterar o código.</p>
+                </div>
+              </div>
+              <form id="siteContentForm">
+                <div class="content-editor-grid" id="siteTextFields"></div>
+                <h4 class="content-editor-title">Imagens do site</h4>
+                <div class="content-image-grid" id="siteImageFields"></div>
+                <div class="admin-inline-actions">
+                  <button class="btn btn-primary" type="submit">Salvar alterações do site</button>
+                  <button class="btn btn-secondary" id="reloadSiteContent" type="button">Descartar alterações</button>
+                </div>
+              </form>
+            </section>
           </div>
         </div>
       </section>
@@ -383,7 +402,7 @@
     </aside>
     <div class="overlay" id="overlay"></div>
     <script>
-      const WA = '5562993580287';
+      let WA = '5562993580287';
       const KEY = 'tm_products_v4';
       const LEGACY_KEY = 'tm_products_v3';
       const SUPABASE_URL = 'https://ymtglrjcuwpzyvepvwwt.supabase.co';
@@ -392,6 +411,63 @@
       const ADMIN_SESSION = 'tm_admin_access_token';
       const LOCAL_MIGRATION = 'tm_products_supabase_migrated_v1';
       const localCatalogAtStart = localStorage.getItem(KEY);
+
+      const contentFieldDefs = [
+        {key:'topbar_message',label:'Mensagem superior',selector:'.topbar span:nth-child(1)'},
+        {key:'topbar_shipping',label:'Aviso de entrega',selector:'.topbar span:nth-child(2)'},
+        {key:'topbar_purpose',label:'Mensagem de propósito',selector:'.topbar span:nth-child(3)'},
+        {key:'brand_name',label:'Nome da marca',selector:'.brand-text strong, .footer-brand strong'},
+        {key:'brand_category',label:'Categoria da marca',selector:'.brand-text span, .footer-brand span'},
+        {key:'brand_tagline',label:'Slogan da marca',selector:'.brand-text small, .footer-brand small'},
+        {key:'nav_home',label:'Menu: Início',selector:'.nav a:nth-child(1)'},
+        {key:'nav_catalog',label:'Menu: Catálogo',selector:'.nav a:nth-child(2)'},
+        {key:'nav_custom',label:'Menu: Personalizados',selector:'.nav a:nth-child(3)'},
+        {key:'nav_about',label:'Menu: Sobre Nós',selector:'.nav a:nth-child(4)'},
+        {key:'nav_contact',label:'Menu: Fale Conosco',selector:'.nav a:nth-child(5)'},
+        {key:'hero_eyebrow',label:'Destaque acima do título principal',selector:'.hero-copy .eyebrow'},
+        {key:'hero_title',label:'Título principal',selector:'.hero-copy h1'},
+        {key:'hero_description',label:'Descrição principal',selector:'.hero-copy .lead',multiline:true},
+        {key:'hero_quote',label:'Frase ao lado da imagem principal',selector:'.hero-quote',multiline:true},
+        {key:'categories_title',label:'Título da seção de categorias',selector:'#categorias .section-title h2'},
+        {key:'categories_subtitle',label:'Legenda da seção de categorias',selector:'#categorias .section-title p'},
+        {key:'category_tercos_label',label:'Terços: texto sobre a imagem',selector:'[data-category-cover="tercos"] .category-kicker'},
+        {key:'category_tercos_title',label:'Terços: título',selector:'.category-card:nth-child(1) .category-copy h3'},
+        {key:'category_tercos_description',label:'Terços: legenda abaixo do card',selector:'.category-card:nth-child(1) .category-copy p',multiline:true},
+        {key:'category_artigos_label',label:'Artigos: texto sobre a imagem',selector:'[data-category-cover="artigos"] .category-kicker'},
+        {key:'category_artigos_title',label:'Artigos: título',selector:'.category-card:nth-child(2) .category-copy h3'},
+        {key:'category_artigos_description',label:'Artigos: legenda abaixo do card',selector:'.category-card:nth-child(2) .category-copy p',multiline:true},
+        {key:'category_personalizados_label',label:'Personalizados: texto sobre a imagem',selector:'[data-category-cover="personalizados"] .category-kicker'},
+        {key:'category_personalizados_title',label:'Personalizados: título',selector:'.category-card:nth-child(3) .category-copy h3'},
+        {key:'category_personalizados_description',label:'Personalizados: legenda abaixo do card',selector:'.category-card:nth-child(3) .category-copy p',multiline:true},
+        {key:'catalog_title',label:'Título do catálogo',selector:'#catalogo .section-head h2'},
+        {key:'buy_title',label:'Como comprar: título',selector:'#sobre .buy-panel > div:first-child h2'},
+        {key:'buy_subtitle',label:'Como comprar: legenda',selector:'#sobre .buy-panel > div:first-child p'},
+        {key:'step_1_title',label:'Passo 1: título',selector:'#sobre .step:nth-child(2) h3'},
+        {key:'step_1_description',label:'Passo 1: descrição',selector:'#sobre .step:nth-child(2) p',multiline:true},
+        {key:'step_2_title',label:'Passo 2: título',selector:'#sobre .step:nth-child(3) h3'},
+        {key:'step_2_description',label:'Passo 2: descrição',selector:'#sobre .step:nth-child(3) p',multiline:true},
+        {key:'step_3_title',label:'Passo 3: título',selector:'#sobre .step:nth-child(4) h3'},
+        {key:'step_3_description',label:'Passo 3: descrição',selector:'#sobre .step:nth-child(4) p',multiline:true},
+        {key:'custom_eyebrow',label:'Personalizados: destaque',selector:'#personalizados .custom-copy .eyebrow'},
+        {key:'custom_title',label:'Personalizados: título da seção',selector:'#personalizados .custom-copy h2'},
+        {key:'custom_description',label:'Personalizados: descrição',selector:'#personalizados .custom-copy > p:not(.eyebrow)',multiline:true},
+        {key:'footer_quote',label:'Frase do rodapé',selector:'.footer-quote',multiline:true},
+        {key:'footer_social_title',label:'Rodapé: título de contato',selector:'.footer-inner > div:last-child h3'},
+        {key:'footer_instagram',label:'Rodapé: Instagram',selector:'.footer-inner > div:last-child p:nth-of-type(1)'},
+        {key:'footer_whatsapp',label:'Rodapé: WhatsApp exibido',selector:'.footer-inner > div:last-child p:nth-of-type(2)'},
+        {key:'whatsapp_number',label:'Número do WhatsApp (somente números com DDI)',special:'whatsapp'}
+      ];
+
+      const imageFieldDefs = [
+        {key:'logo_image',label:'Logo do cabeçalho e rodapé',selectors:['.brand-logo','.footer-brand img']},
+        {key:'hero_image',label:'Imagem principal do site',selectors:['.hero-bg']},
+        {key:'category_tercos_image',label:'Capa da categoria Terços',category:'tercos'},
+        {key:'category_artigos_image',label:'Capa da categoria Artigos Religiosos',category:'artigos'},
+        {key:'category_personalizados_image',label:'Capa da categoria Personalizados',category:'personalizados'}
+      ];
+
+      let siteContent = {};
+      let siteImageDrafts = {};
 
       const defaults = [
         {id:1,name:'Terço de Pérolas',desc:'Nossa Senhora Aparecida',price:'R$ 49,90',cat:'tercos',badge:'Mais vendido',image:''},
@@ -454,6 +530,7 @@
         renderCategoryCards();
         renderProducts();
         renderAdmin();
+        renderContentEditor();
       }
 
       const apiHeaders = (token = '') => ({
@@ -491,6 +568,127 @@
           throw new Error(data?.message || data?.error_description || data?.error || 'Falha ao sincronizar com o banco.');
         }
         return data;
+      }
+
+      function readCurrentContent(def) {
+        if (def.special === 'whatsapp') return WA;
+        const element = document.querySelector(def.selector);
+        return element ? element.textContent.trim().replace(/\s+/g, ' ') : '';
+      }
+
+      function applySiteContent() {
+        contentFieldDefs.forEach((def) => {
+          if (!(def.key in siteContent)) return;
+          if (def.special === 'whatsapp') {
+            const digits = siteContent[def.key].replace(/\D/g, '');
+            if (digits) WA = digits;
+            return;
+          }
+          document.querySelectorAll(def.selector).forEach((element) => {
+            element.textContent = siteContent[def.key];
+          });
+        });
+
+        imageFieldDefs.forEach((def) => {
+          if (!siteContent[def.key] || !def.selectors) return;
+          def.selectors.forEach((selector) => {
+            document.querySelectorAll(selector).forEach((image) => {
+              image.src = siteContent[def.key];
+            });
+          });
+        });
+      }
+
+      async function loadSiteContent() {
+        try {
+          const rows = await databaseRequest('/rest/v1/tm_site_content?select=key,value', {
+            headers: apiHeaders()
+          });
+          siteContent = Object.fromEntries((rows || []).map((row) => [row.key, row.value]));
+          applySiteContent();
+          renderCategoryCards();
+          if (document.body.classList.contains('admin-authenticated')) renderContentEditor();
+        } catch (error) {
+          console.error('Não foi possível carregar o conteúdo personalizado.', error);
+        }
+      }
+
+      function renderContentEditor() {
+        const textContainer = $('#siteTextFields');
+        const imageContainer = $('#siteImageFields');
+        if (!textContainer || !imageContainer) return;
+
+        textContainer.innerHTML = contentFieldDefs.map((def) => {
+          const value = def.key in siteContent ? siteContent[def.key] : readCurrentContent(def);
+          const control = def.multiline
+            ? `<textarea data-content-key="${def.key}" rows="3">${esc(value)}</textarea>`
+            : `<input data-content-key="${def.key}" value="${esc(value)}">`;
+          return `<label class="content-field"><span>${esc(def.label)}</span>${control}</label>`;
+        }).join('');
+
+        imageContainer.innerHTML = imageFieldDefs.map((def) => {
+          const current = siteImageDrafts[def.key] ?? siteContent[def.key] ?? '';
+          return `<div class="content-image-field">
+            <div class="content-image-preview" data-image-preview="${def.key}">
+              ${current ? `<img src="${current}" alt="${esc(def.label)}">` : '<span>Usando imagem atual ou automática</span>'}
+            </div>
+            <label><span>${esc(def.label)}</span>
+              <input type="file" accept="image/png,image/jpeg,image/webp" data-image-key="${def.key}">
+            </label>
+            <button type="button" class="small" data-remove-site-image="${def.key}">Usar imagem automática</button>
+          </div>`;
+        }).join('');
+
+        imageContainer.querySelectorAll('[data-image-key]').forEach((input) => {
+          input.addEventListener('change', async () => {
+            const file = input.files && input.files[0];
+            if (!file) return;
+            if (!file.type.startsWith('image/')) return alert('Selecione uma imagem válida.');
+            try {
+              const image = await compressImage(file, 1600, 1600, .84);
+              siteImageDrafts[input.dataset.imageKey] = image;
+              const preview = imageContainer.querySelector(`[data-image-preview="${input.dataset.imageKey}"]`);
+              preview.innerHTML = `<img src="${image}" alt="Prévia">`;
+            } catch (error) {
+              alert('Não foi possível processar essa imagem.');
+            }
+          });
+        });
+
+        imageContainer.querySelectorAll('[data-remove-site-image]').forEach((button) => {
+          button.onclick = () => {
+            const key = button.dataset.removeSiteImage;
+            siteImageDrafts[key] = '';
+            imageContainer.querySelector(`[data-image-preview="${key}"]`).innerHTML = '<span>Usando imagem atual ou automática</span>';
+          };
+        });
+      }
+
+      async function saveSiteContent(token) {
+        document.querySelectorAll('[data-content-key]').forEach((input) => {
+          siteContent[input.dataset.contentKey] = input.value.trim();
+        });
+        Object.assign(siteContent, siteImageDrafts);
+
+        const rows = Object.entries(siteContent).map(([key, value]) => ({
+          key,
+          value: String(value ?? ''),
+          updated_at: new Date().toISOString()
+        }));
+
+        await databaseRequest('/rest/v1/tm_site_content?on_conflict=key', {
+          method: 'POST',
+          headers: {
+            ...apiHeaders(token),
+            Prefer: 'resolution=merge-duplicates,return=minimal'
+          },
+          body: JSON.stringify(rows)
+        });
+
+        siteImageDrafts = {};
+        applySiteContent();
+        renderCategoryCards();
+        renderContentEditor();
       }
 
       async function loadProductsFromDatabase() {
@@ -571,14 +769,17 @@
           const category = cover.dataset.categoryCover;
           const config = categories[category];
           const featured = products.find((product) => product.cat === category && product.image);
+          const customImage = siteContent[`category_${category === 'artigos' ? 'artigos' : category}_image`];
+          const coverImage = customImage || featured?.image;
+          const coverAlt = customImage ? config.fallback : featured?.name;
 
-          cover.classList.toggle('has-category-image', Boolean(featured));
-          cover.innerHTML = featured
-            ? `<img src="${featured.image}" alt="${esc(featured.name)}" loading="lazy">
+          cover.classList.toggle('has-category-image', Boolean(coverImage));
+          cover.innerHTML = coverImage
+            ? `<img src="${coverImage}" alt="${esc(coverAlt || config.fallback)}" loading="lazy">
                <span class="category-image-shade"></span>
-               <span class="category-kicker">${config.kicker}</span>`
+               <span class="category-kicker">${esc(siteContent[`category_${category}_label`] || config.kicker)}</span>`
             : `<div class="category-placeholder"><small>${config.eyebrow}</small><strong>${config.fallback}</strong></div>
-               <span class="category-kicker">${config.kicker}</span>`;
+               <span class="category-kicker">${esc(siteContent[`category_${category}_label`] || config.kicker)}</span>`;
         });
       }
 
@@ -886,6 +1087,31 @@ Detalhes: ${details}` : ''}`;
         updateImagePreview('');
       };
 
+      $('#siteContentForm').onsubmit = async (event) => {
+        event.preventDefault();
+        const button = event.submitter || event.currentTarget.querySelector('[type="submit"]');
+        button.disabled = true;
+        button.textContent = 'Salvando...';
+        try {
+          const token = sessionStorage.getItem(ADMIN_SESSION);
+          if (!token) throw new Error('Sua sessão terminou. Entre novamente.');
+          await saveSiteContent(token);
+          alert('Textos e imagens atualizados em todo o site.');
+        } catch (error) {
+          console.error(error);
+          alert(error.message || 'Não foi possível salvar o conteúdo.');
+        } finally {
+          button.disabled = false;
+          button.textContent = 'Salvar alterações do site';
+        }
+      };
+
+      $('#reloadSiteContent').onclick = async () => {
+        siteImageDrafts = {};
+        await loadSiteContent();
+        renderContentEditor();
+      };
+
       $('#adminPanel').onsubmit = async (event) => {
         event.preventDefault();
 
@@ -980,6 +1206,7 @@ Detalhes: ${details}` : ''}`;
       renderCart();
       renderAdmin();
       loadProductsFromDatabase();
+      loadSiteContent();
     </script>
   </body>
 </html>
