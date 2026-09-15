@@ -1687,6 +1687,566 @@ body.admin-authenticated .admin-only {
   }
 }
 
+/* Galeria e página individual do produto */
+body.detail-open {
+  overflow: hidden;
+}
+
+.product {
+  position: relative;
+}
+
+.product-open {
+  width: 100%;
+  border: 0;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.product-photo-empty {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--blue2);
+  font-size: 48px;
+}
+
+.product-card-heart {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 4;
+  display: grid;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(255,255,255,.94);
+  box-shadow: 0 6px 18px rgba(16,54,86,.14);
+}
+
+.photo-count {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  z-index: 3;
+  padding: 7px 10px;
+  border-radius: 999px;
+  color: #fff;
+  background: rgba(12,35,53,.78);
+  font: 700 12px/1 Montserrat,sans-serif;
+}
+
+.product-title-link {
+  border: 0;
+  padding: 0;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.product-title-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.product-actions .details {
+  border: 1px solid var(--line);
+  color: var(--blue2);
+  background: #fff;
+}
+
+.field-help {
+  display: block;
+  margin-top: 7px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+.image-preview {
+  grid-template-columns: repeat(auto-fill,minmax(130px,1fr));
+  align-items: stretch;
+  gap: 12px;
+}
+
+.image-preview > span {
+  grid-column: 1 / -1;
+  align-self: center;
+  text-align: center;
+}
+
+.admin-gallery-item {
+  position: relative;
+  display: grid;
+  grid-template-rows: 120px auto auto;
+  gap: 7px;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: #fff;
+}
+
+.admin-gallery-item.cover {
+  border: 2px solid var(--blue2);
+}
+
+.admin-gallery-item img {
+  width: 100%;
+  height: 120px;
+  max-height: none;
+  object-fit: contain;
+  border-radius: 9px;
+  background: #f4f7fa;
+}
+
+.admin-gallery-item > span {
+  color: var(--blue2);
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.admin-gallery-item > div {
+  display: grid;
+  grid-template-columns: repeat(3,1fr);
+  gap: 5px;
+}
+
+.admin-gallery-item button {
+  min-height: 34px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--blue2);
+  background: #f7fbff;
+  cursor: pointer;
+}
+
+.admin-gallery-item button:disabled {
+  opacity: .35;
+  cursor: default;
+}
+
+.admin-gallery-item button.danger {
+  color: #a12929;
+}
+
+.product-detail-page {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: none;
+  overflow-y: auto;
+  color: #18344b;
+  background: #f4f5f7;
+}
+
+.product-detail-page.open {
+  display: block;
+}
+
+.detail-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  min-height: 74px;
+  padding: 12px clamp(18px,4vw,60px);
+  border-bottom: 1px solid #dce3e9;
+  background: rgba(255,255,255,.97);
+  box-shadow: 0 5px 20px rgba(20,44,64,.06);
+  backdrop-filter: blur(12px);
+}
+
+.detail-back,
+.detail-cart {
+  width: max-content;
+  min-height: 42px;
+  padding: 0 16px;
+  border: 1px solid #cdd9e2;
+  border-radius: 999px;
+  color: #176eac;
+  background: #fff;
+  font: 700 14px/1 Montserrat,sans-serif;
+  cursor: pointer;
+}
+
+.detail-cart {
+  justify-self: end;
+  color: #fff;
+  border-color: #0878d6;
+  background: #0878d6;
+}
+
+.detail-cart span {
+  display: inline-grid;
+  min-width: 23px;
+  height: 23px;
+  margin-left: 5px;
+  padding: 0 6px;
+  place-items: center;
+  border-radius: 999px;
+  color: #0878d6;
+  background: #fff;
+}
+
+.detail-brand {
+  color: #176eac;
+  font: 700 clamp(25px,3vw,36px)/1 "Cormorant Garamond",serif;
+  text-decoration: none;
+}
+
+.product-detail-shell {
+  width: min(1240px,calc(100% - 36px));
+  margin: 0 auto;
+  padding: 24px 0 54px;
+}
+
+.detail-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 32px;
+  margin-bottom: 14px;
+  color: #627789;
+  font-size: 14px;
+}
+
+.detail-breadcrumb button {
+  border: 0;
+  padding: 0;
+  color: #176eac;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+}
+
+.detail-layout {
+  display: grid;
+  grid-template-columns: minmax(0,1.65fr) minmax(330px,.75fr);
+  gap: 22px;
+  align-items: start;
+}
+
+.detail-gallery,
+.detail-buy-box {
+  border: 1px solid #dce3e9;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 8px 26px rgba(22,52,76,.07);
+}
+
+.detail-gallery {
+  display: grid;
+  grid-template-columns: 90px minmax(0,1fr);
+  gap: 14px;
+  min-width: 0;
+  padding: 18px;
+}
+
+.detail-thumbnails {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 620px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.detail-thumb {
+  flex: 0 0 78px;
+  width: 78px;
+  height: 78px;
+  padding: 5px;
+  border: 2px solid transparent;
+  border-radius: 10px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.detail-thumb.active {
+  border-color: #0878d6;
+}
+
+.detail-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 6px;
+}
+
+.detail-main-image {
+  position: relative;
+  display: grid;
+  min-width: 0;
+  min-height: 590px;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.detail-main-image > img {
+  display: block;
+  width: 100%;
+  height: 590px;
+  object-fit: contain;
+}
+
+.detail-image-counter {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  padding: 8px 11px;
+  border-radius: 999px;
+  color: #fff;
+  background: rgba(16,42,61,.78);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.detail-image-empty {
+  display: grid;
+  place-items: center;
+  color: #7890a2;
+  text-align: center;
+}
+
+.detail-image-empty span {
+  color: #69b8ef;
+  font-size: 68px;
+}
+
+.detail-buy-box {
+  position: sticky;
+  top: 96px;
+  padding: 28px;
+}
+
+.detail-heading-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.detail-category {
+  color: #607789;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: .6px;
+  text-transform: uppercase;
+}
+
+.detail-favorite {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  place-items: center;
+  border: 1px solid #cdd9e2;
+  border-radius: 50%;
+  color: #0878d6;
+  background: #fff;
+  font-size: 23px;
+  cursor: pointer;
+}
+
+.detail-favorite.active {
+  color: #fff;
+  border-color: #0878d6;
+  background: #0878d6;
+}
+
+.detail-badge {
+  display: inline-block;
+  margin-top: 14px;
+  padding: 7px 10px;
+  border-radius: 7px;
+  color: #fff;
+  background: #176eac;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.detail-buy-box h1 {
+  margin: 16px 0 8px;
+  color: #173e5d;
+  font-size: clamp(34px,4vw,49px);
+  line-height: 1;
+}
+
+.detail-price {
+  margin: 20px 0;
+  color: #163f5f;
+  font: 700 clamp(30px,3.5vw,42px)/1 Montserrat,sans-serif;
+}
+
+.detail-description {
+  margin: 0;
+  color: #51697c;
+  font-size: 16px;
+  line-height: 1.65;
+}
+
+.detail-assurances {
+  display: grid;
+  gap: 14px;
+  margin: 24px 0;
+  padding: 20px 0;
+  border-top: 1px solid #e1e7ec;
+  border-bottom: 1px solid #e1e7ec;
+}
+
+.detail-assurances > div {
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  gap: 10px;
+}
+
+.detail-assurances > div > span {
+  color: #0878d6;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.detail-assurances p,
+.detail-assurances small {
+  display: block;
+  margin: 0;
+}
+
+.detail-assurances strong {
+  display: block;
+  margin-bottom: 3px;
+  color: #183f5d;
+  font-size: 14px;
+}
+
+.detail-assurances small {
+  color: #6f8291;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.detail-primary,
+.detail-secondary {
+  width: 100%;
+  min-height: 52px;
+  border: 0;
+  border-radius: 11px;
+  font: 700 15px/1.2 Montserrat,sans-serif;
+  cursor: pointer;
+}
+
+.detail-primary {
+  color: #fff;
+  background: #10a64a;
+}
+
+.detail-secondary {
+  margin-top: 11px;
+  color: #0878d6;
+  border: 1px solid #b8d9ef;
+  background: #eaf6fe;
+}
+
+@media (max-width: 900px) {
+  .detail-layout {
+    grid-template-columns: minmax(0,1fr);
+  }
+
+  .detail-buy-box {
+    position: static;
+  }
+}
+
+@media (max-width: 620px) {
+  .product-detail-shell {
+    width: min(100% - 20px,1240px);
+    padding-top: 12px;
+  }
+
+  .detail-topbar {
+    grid-template-columns: auto 1fr auto;
+    min-height: 62px;
+    padding: 9px 10px;
+  }
+
+  .detail-brand {
+    justify-self: center;
+    font-size: 24px;
+  }
+
+  .detail-back,
+  .detail-cart {
+    min-height: 39px;
+    padding: 0 11px;
+    font-size: 12px;
+  }
+
+  .detail-gallery {
+    grid-template-columns: minmax(0,1fr);
+    padding: 10px;
+  }
+
+  .detail-thumbnails {
+    order: 2;
+    flex-direction: row;
+    max-width: 100%;
+    overflow-x: auto;
+  }
+
+  .detail-main-image,
+  .detail-main-image > img {
+    min-height: 380px;
+    height: 54vh;
+    max-height: 500px;
+  }
+
+  .detail-thumb {
+    flex-basis: 70px;
+    width: 70px;
+    height: 70px;
+  }
+
+  .detail-buy-box {
+    padding: 22px 18px;
+  }
+
+  .detail-buy-box h1 {
+    font-size: 37px;
+  }
+
+  .detail-price {
+    font-size: 31px;
+  }
+
+  .image-preview {
+    grid-template-columns: repeat(2,minmax(0,1fr));
+  }
+}
+
+@media (max-width: 380px) {
+  .detail-brand {
+    display: none;
+  }
+
+  .detail-topbar {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
 
 /* =========================================================
    VITRINES DE CATEGORIAS — identidade Toque de Maria

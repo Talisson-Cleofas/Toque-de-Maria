@@ -24,7 +24,7 @@
       href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Montserrat:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=20260915-uniform-product-cards" />
+    <link rel="stylesheet" href="styles.css?v=20260915-product-gallery" />
   </head>
   <body>
     <div class="topbar">
@@ -360,16 +360,18 @@
                   </label>
 
                   <label>
-                    Imagem do produto
+                    Fotos do produto
                     <input
                       id="pimage"
                       type="file"
                       accept="image/png,image/jpeg,image/webp"
+                      multiple
                     />
+                    <small class="field-help">Selecione até 8 fotos. A primeira será a capa do produto.</small>
                   </label>
 
                   <div class="image-preview" id="imagePreview">
-                    <span>Nenhuma imagem selecionada</span>
+                    <span>Nenhuma foto selecionada</span>
                   </div>
 
                   <div class="admin-inline-actions">
@@ -388,7 +390,7 @@
                       type="button"
                       id="removeImage"
                     >
-                      Remover imagem
+                      Remover todas as fotos
                     </button>
                     <button
                       class="btn btn-secondary"
@@ -428,6 +430,14 @@
         </div>
       </section>
     </main>
+    <section class="product-detail-page" id="productDetailPage" aria-hidden="true">
+      <div class="detail-topbar">
+        <button class="detail-back" id="closeProductDetail" type="button" aria-label="Voltar ao catálogo">← Voltar</button>
+        <a class="detail-brand" href="/" aria-label="Ir para o início">Toque de Maria</a>
+        <button class="detail-cart" id="detailCartBtn" type="button">Pedido <span id="detailCartCount">0</span></button>
+      </div>
+      <div class="product-detail-shell" id="productDetailContent"></div>
+    </section>
     <footer class="footer" id="contato">
       <div class="footer-inner">
         <div class="footer-brand">
@@ -574,6 +584,29 @@
 
       const $ = (selector) => document.querySelector(selector);
 
+      function normalizeProductImages(value) {
+        if (Array.isArray(value)) return value.filter(Boolean).slice(0, 8);
+        if (!value) return [];
+        if (typeof value === 'string' && value.trim().startsWith('[')) {
+          try {
+            const parsed = JSON.parse(value);
+            if (Array.isArray(parsed)) return parsed.filter(Boolean).slice(0, 8);
+          } catch (error) {
+            console.warn('Galeria antiga mantida com a foto principal.', error);
+          }
+        }
+        return [value].filter(Boolean);
+      }
+
+      function normalizeProduct(product) {
+        const images = normalizeProductImages(product.images || product.image);
+        return {...product, images, image: images[0] || ''};
+      }
+
+      function primaryProductImage(product) {
+        return normalizeProductImages(product.images || product.image)[0] || '';
+      }
+
       function cloneDefaults() {
         return JSON.parse(JSON.stringify(defaults));
       }
@@ -582,12 +615,12 @@
         try {
           const current = JSON.parse(localStorage.getItem(KEY));
           if (Array.isArray(current) && current.length) {
-            return current.map(p => ({ ...p, image: p.image || '' }));
+            return current.map(normalizeProduct);
           }
 
           const legacy = JSON.parse(localStorage.getItem(LEGACY_KEY));
           if (Array.isArray(legacy) && legacy.length) {
-            const migrated = legacy.map(p => ({ ...p, image: p.image || '' }));
+            const migrated = legacy.map(normalizeProduct);
             localStorage.setItem(KEY, JSON.stringify(migrated));
             return migrated;
           }
@@ -600,7 +633,9 @@
 
       let products = loadProducts();
       let cart = [];
-      let editingImage = '';
+      let editingImages = [];
+      let openProductId = null;
+      let activeProductImage = 0;
       let catalogQuery = '';
       let catalogCategory = 'all';
       let catalogSort = 'featured';
@@ -631,6 +666,7 @@
       }
 
       function saveProducts() {
+        products = products.map(normalizeProduct);
         try {
           localStorage.setItem(KEY, JSON.stringify(products));
         } catch (error) {
@@ -640,6 +676,7 @@
         renderProducts();
         renderAdmin();
         renderContentEditor();
+        if (openProductId !== null) renderProductDetail(openProductId);
       }
 
       const apiHeaders = (token = '') => ({
@@ -648,7 +685,7 @@
         ...(token ? { Authorization: `Bearer ${token}` } : {})
       });
 
-      const fromDatabase = (p) => ({
+      const fromDatabase = (p) => normalizeProduct({
         id: Number(p.id),
         name: p.name,
         desc: p.description || '',
@@ -665,7 +702,7 @@
         price: p.price || '',
         category: p.cat || 'tercos',
         badge: p.badge || '',
-        image: p.image || '',
+        image: JSON.stringify(normalizeProductImages(p.images || p.image)),
         sort_order: index,
         active: true
       });
@@ -810,6 +847,7 @@
           if (Array.isArray(rows)) {
             products = rows.map(fromDatabase);
             saveProducts();
+            openProductFromUrl();
           }
         } catch (error) {
           console.error(error);
@@ -879,9 +917,9 @@
         document.querySelectorAll('[data-category-cover]').forEach((cover) => {
           const category = cover.dataset.categoryCover;
           const config = categories[category];
-          const featured = products.find((product) => product.cat === category && product.image);
+          const featured = products.find((product) => product.cat === category && primaryProductImage(product));
           const customImage = siteContent[`category_${category === 'artigos' ? 'artigos' : category}_image`];
-          const coverImage = customImage || featured?.image;
+          const coverImage = customImage || (featured ? primaryProductImage(featured) : '');
           const coverAlt = customImage ? config.fallback : featured?.name;
 
           cover.classList.toggle('has-category-image', Boolean(coverImage));
@@ -896,19 +934,23 @@
 
       function productCardTemplate(p) {
         const isFavorite = favorites.has(String(p.id));
+        const cover = primaryProductImage(p);
+        const photoCount = normalizeProductImages(p.images || p.image).length;
         return `
           <article class="product">
-            <div class="product-img ${p.image ? 'has-image' : ''}">
-              ${p.image ? `<img src="${p.image}" alt="${esc(p.name)}" loading="lazy">` : ''}
+            <button class="product-img product-open ${cover ? 'has-image' : ''}" type="button" onclick="showProduct(${p.id})" aria-label="Ver detalhes de ${esc(p.name)}">
+              ${cover ? `<img src="${cover}" alt="${esc(p.name)}" loading="lazy">` : '<span class="product-photo-empty">✦</span>'}
               ${p.badge ? `<span class="badge">${esc(p.badge)}</span>` : ''}
-              <button class="heart ${isFavorite ? 'active' : ''}" type="button" onclick="toggleFavorite(${p.id})" aria-label="${isFavorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}">${isFavorite ? '♥' : '♡'}</button>
-            </div>
+              ${photoCount > 1 ? `<span class="photo-count">▧ ${photoCount} fotos</span>` : ''}
+            </button>
+            <button class="heart product-card-heart ${isFavorite ? 'active' : ''}" type="button" onclick="toggleFavorite(${p.id})" aria-label="${isFavorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}">${isFavorite ? '♥' : '♡'}</button>
             <div class="product-body">
               <span class="product-category">${esc(categoryLabel(p.cat))}</span>
-              <h3>${esc(p.name)}</h3>
+              <h3><button class="product-title-link" type="button" onclick="showProduct(${p.id})">${esc(p.name)}</button></h3>
               <p>${esc(p.desc)}</p>
               <div class="price">${esc(p.price)}</div>
               <div class="product-actions">
+                <button class="pbtn details" onclick="showProduct(${p.id})">Ver detalhes e fotos</button>
                 <button class="pbtn whatsapp" onclick="direct(${p.id})">
                   ${esc(siteContent.product_whatsapp_label || '💬 Pedir pelo WhatsApp')}
                 </button>
@@ -986,11 +1028,106 @@
         }).join('');
       }
 
+      function renderProductDetail(id) {
+        const product = products.find((item) => Number(item.id) === Number(id));
+        const content = $('#productDetailContent');
+        if (!product || !content) return;
+
+        const images = normalizeProductImages(product.images || product.image);
+        activeProductImage = Math.min(activeProductImage, Math.max(0, images.length - 1));
+        const currentImage = images[activeProductImage] || '';
+        const isFavorite = favorites.has(String(product.id));
+
+        content.innerHTML = `
+          <nav class="detail-breadcrumb" aria-label="Navegação estrutural">
+            <button type="button" onclick="hideProduct()">Catálogo</button>
+            <span>›</span><span>${esc(categoryLabel(product.cat))}</span>
+          </nav>
+          <div class="detail-layout">
+            <div class="detail-gallery">
+              <div class="detail-thumbnails" aria-label="Fotos do produto">
+                ${images.map((image, index) => `
+                  <button class="detail-thumb ${index === activeProductImage ? 'active' : ''}" type="button" onclick="selectProductImage(${index})" aria-label="Ver foto ${index + 1}">
+                    <img src="${image}" alt="${esc(product.name)} — foto ${index + 1}">
+                  </button>
+                `).join('')}
+              </div>
+              <div class="detail-main-image">
+                ${currentImage
+                  ? `<img src="${currentImage}" alt="${esc(product.name)} — foto ${activeProductImage + 1}">`
+                  : '<div class="detail-image-empty"><span>✦</span><p>Foto não disponível</p></div>'}
+                ${images.length > 1 ? `<span class="detail-image-counter">${activeProductImage + 1} / ${images.length}</span>` : ''}
+              </div>
+            </div>
+            <aside class="detail-buy-box">
+              <div class="detail-heading-row">
+                <span class="detail-category">${esc(categoryLabel(product.cat))}</span>
+                <button class="detail-favorite ${isFavorite ? 'active' : ''}" type="button" onclick="toggleFavorite(${product.id})" aria-label="${isFavorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}">${isFavorite ? '♥' : '♡'}</button>
+              </div>
+              ${product.badge ? `<span class="detail-badge">${esc(product.badge)}</span>` : ''}
+              <h1>${esc(product.name)}</h1>
+              <div class="detail-price">${formatMoney(priceToNumber(product.price))}</div>
+              <p class="detail-description">${esc(product.desc)}</p>
+              <div class="detail-assurances">
+                <div><span>✓</span><p><strong>Atendimento personalizado</strong><small>Confirme disponibilidade, prazo e entrega pelo WhatsApp.</small></p></div>
+                <div><span>♡</span><p><strong>Feito com cuidado</strong><small>Uma peça preparada para acompanhar sua história de fé.</small></p></div>
+              </div>
+              <button class="detail-primary" type="button" onclick="direct(${product.id})">💬 Pedir este produto no WhatsApp</button>
+              <button class="detail-secondary" type="button" onclick="add(${product.id})">＋ Adicionar ao pedido</button>
+            </aside>
+          </div>
+        `;
+      }
+
+      window.showProduct = (id, updateUrl = true) => {
+        const product = products.find((item) => Number(item.id) === Number(id));
+        if (!product) return;
+        openProductId = Number(id);
+        activeProductImage = 0;
+        renderProductDetail(openProductId);
+        $('#productDetailPage').classList.add('open');
+        $('#productDetailPage').setAttribute('aria-hidden', 'false');
+        document.body.classList.add('detail-open');
+        $('#productDetailPage').scrollTop = 0;
+        if (updateUrl) {
+          const url = new URL(location.href);
+          url.searchParams.set('produto', openProductId);
+          url.hash = '';
+          history.pushState({productId: openProductId}, '', url);
+        }
+      };
+
+      window.hideProduct = (updateUrl = true) => {
+        openProductId = null;
+        activeProductImage = 0;
+        $('#productDetailPage').classList.remove('open');
+        $('#productDetailPage').setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('detail-open');
+        if (updateUrl) {
+          const url = new URL(location.href);
+          url.searchParams.delete('produto');
+          url.hash = 'catalogo';
+          history.pushState({}, '', url);
+        }
+      };
+
+      window.selectProductImage = (index) => {
+        activeProductImage = Number(index) || 0;
+        renderProductDetail(openProductId);
+      };
+
+      function openProductFromUrl() {
+        const id = Number(new URLSearchParams(location.search).get('produto'));
+        if (id && products.some((product) => Number(product.id) === id)) showProduct(id, false);
+        else if (!id && openProductId !== null) hideProduct(false);
+      }
+
       window.toggleFavorite = (id) => {
         const key = String(id);
         favorites.has(key) ? favorites.delete(key) : favorites.add(key);
         localStorage.setItem('tm_favorites_v1', JSON.stringify([...favorites]));
         renderProducts();
+        if (openProductId !== null) renderProductDetail(openProductId);
       };
 
       window.direct = (id) => {
@@ -1054,7 +1191,9 @@ Podemos confirmar disponibilidade, prazo e entrega?`),
       }
 
       function renderCart() {
-        $('#cartCount').textContent = cart.reduce((total, item) => total + item.qty, 0);
+        const itemCount = cart.reduce((total, item) => total + item.qty, 0);
+        $('#cartCount').textContent = itemCount;
+        $('#detailCartCount').textContent = itemCount;
         $('#cartTotal').textContent = formatMoney(cartTotalValue());
 
         $('#cartItems').innerHTML = cart.length
@@ -1063,7 +1202,7 @@ Podemos confirmar disponibilidade, prazo e entrega?`),
               return `
               <div class="cart-item">
                 <div class="cart-item-main">
-                  ${item.image ? `<img class="cart-thumb" src="${item.image}" alt="">` : '<span class="cart-thumb cart-thumb-empty">✦</span>'}
+                  ${primaryProductImage(item) ? `<img class="cart-thumb" src="${primaryProductImage(item)}" alt="">` : '<span class="cart-thumb cart-thumb-empty">✦</span>'}
                   <div class="cart-item-copy">
                     <h4>${esc(item.name)}</h4>
                     <p>${esc(item.desc)}</p>
@@ -1145,8 +1284,14 @@ Podemos confirmar disponibilidade, prazo e entrega?`),
       };
 
       $('#cartBtn').onclick = openCart;
+      $('#detailCartBtn').onclick = openCart;
       $('#closeCart').onclick = closeCart;
       $('#overlay').onclick = closeCart;
+      $('#closeProductDetail').onclick = () => hideProduct();
+      window.addEventListener('popstate', openProductFromUrl);
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && openProductId !== null) hideProduct();
+      });
 
       $('#checkout').onclick = () => {
         if (!cart.length) {
@@ -1201,13 +1346,13 @@ Detalhes: ${details}` : ''}`;
         $('#adminList').innerHTML = products.map((p) => `
           <div class="admin-row">
             <div class="admin-product-summary">
-              ${p.image
-                ? `<img class="admin-thumb" src="${p.image}" alt="${esc(p.name)}">`
+              ${primaryProductImage(p)
+                ? `<img class="admin-thumb" src="${primaryProductImage(p)}" alt="${esc(p.name)}">`
                 : `<div class="admin-thumb admin-thumb-empty">✦</div>`
               }
               <div>
                 <h4>${esc(p.name)}</h4>
-                <p>${esc(p.desc)} • ${esc(p.price)}</p>
+                <p>${esc(p.desc)} • ${esc(p.price)} • ${normalizeProductImages(p.images || p.image).length} foto(s)</p>
               </div>
             </div>
 
@@ -1251,19 +1396,41 @@ Detalhes: ${details}` : ''}`;
       function clearAdminForm() {
         $('#adminPanel').reset();
         $('#pid').value = '';
-        editingImage = '';
-        updateImagePreview('');
+        editingImages = [];
+        updateImagePreview();
       }
 
-      function updateImagePreview(image) {
+      function updateImagePreview() {
         const preview = $('#imagePreview');
 
-        if (image) {
-          preview.innerHTML = `<img src="${image}" alt="Prévia da imagem do produto">`;
+        if (editingImages.length) {
+          preview.innerHTML = editingImages.map((image, index) => `
+            <div class="admin-gallery-item ${index === 0 ? 'cover' : ''}">
+              <img src="${image}" alt="Foto ${index + 1} do produto">
+              <span>${index === 0 ? 'Capa' : `Foto ${index + 1}`}</span>
+              <div>
+                <button type="button" onclick="moveProductImage(${index}, -1)" ${index === 0 ? 'disabled' : ''} aria-label="Mover foto para a esquerda">←</button>
+                <button type="button" onclick="moveProductImage(${index}, 1)" ${index === editingImages.length - 1 ? 'disabled' : ''} aria-label="Mover foto para a direita">→</button>
+                <button type="button" class="danger" onclick="removeProductImage(${index})" aria-label="Remover esta foto">×</button>
+              </div>
+            </div>
+          `).join('');
         } else {
-          preview.innerHTML = '<span>Nenhuma imagem selecionada</span>';
+          preview.innerHTML = '<span>Nenhuma foto selecionada</span>';
         }
       }
+
+      window.moveProductImage = (index, direction) => {
+        const target = index + direction;
+        if (target < 0 || target >= editingImages.length) return;
+        [editingImages[index], editingImages[target]] = [editingImages[target], editingImages[index]];
+        updateImagePreview();
+      };
+
+      window.removeProductImage = (index) => {
+        editingImages.splice(index, 1);
+        updateImagePreview();
+      };
 
       function compressImage(file, maxWidth = 1200, maxHeight = 1200, quality = 0.82) {
         return new Promise((resolve, reject) => {
@@ -1337,17 +1504,25 @@ Detalhes: ${details}` : ''}`;
       $('#clearForm').onclick = clearAdminForm;
 
       $('#pimage').addEventListener('change', async (event) => {
-        const file = event.target.files && event.target.files[0];
-        if (!file) return;
+        const files = [...(event.target.files || [])];
+        if (!files.length) return;
 
-        if (!file.type.startsWith('image/')) {
+        if (files.some((file) => !file.type.startsWith('image/'))) {
           event.target.value = '';
-          return alert('Selecione um arquivo de imagem válido.');
+          return alert('Selecione apenas arquivos de imagem válidos.');
+        }
+
+        if (editingImages.length + files.length > 8) {
+          event.target.value = '';
+          return alert('Você pode cadastrar até 8 fotos por produto.');
         }
 
         try {
-          editingImage = await compressImage(file);
-          updateImagePreview(editingImage);
+          const processed = [];
+          for (const file of files) processed.push(await compressImage(file, 1400, 1400, 0.78));
+          editingImages = [...editingImages, ...processed];
+          updateImagePreview();
+          event.target.value = '';
         } catch (error) {
           console.error(error);
           alert('Não foi possível processar essa imagem.');
@@ -1355,9 +1530,9 @@ Detalhes: ${details}` : ''}`;
       });
 
       $('#removeImage').onclick = () => {
-        editingImage = '';
+        editingImages = [];
         $('#pimage').value = '';
-        updateImagePreview('');
+        updateImagePreview();
       };
 
       function openAdminTab(tab) {
@@ -1413,7 +1588,8 @@ Detalhes: ${details}` : ''}`;
           price: $('#pprice').value.trim(),
           cat: $('#pcat').value,
           badge: $('#pbadge').value.trim(),
-          image: editingImage || existing?.image || ''
+          images: [...editingImages],
+          image: editingImages[0] || ''
         };
 
         products = existing
@@ -1444,9 +1620,9 @@ Detalhes: ${details}` : ''}`;
         $('#pcat').value = p.cat || 'tercos';
         $('#pbadge').value = p.badge || '';
 
-        editingImage = p.image || '';
+        editingImages = normalizeProductImages(p.images || p.image);
         $('#pimage').value = '';
-        updateImagePreview(editingImage);
+        updateImagePreview();
 
         $('#admin').scrollIntoView({behavior:'smooth', block:'start'});
       };
@@ -1492,6 +1668,7 @@ Detalhes: ${details}` : ''}`;
       renderAdmin();
       loadProductsFromDatabase();
       loadSiteContent();
+      openProductFromUrl();
     </script>
   </body>
 </html>
