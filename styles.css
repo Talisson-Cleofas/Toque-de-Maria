@@ -2140,7 +2140,7 @@ body.admin-authenticated .admin-only {
 
 .catalog-tools {
   display: grid;
-  grid-template-columns: minmax(260px,1fr) auto auto;
+  grid-template-columns: minmax(280px,2fr) minmax(160px,.7fr) minmax(160px,.7fr) auto auto;
   gap: 10px;
   align-items: center;
   margin: 0 0 20px;
@@ -2178,6 +2178,36 @@ body.admin-authenticated .admin-only {
   background: transparent
 }
 
+.catalog-select {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--muted);
+  background: #fff
+}
+
+.catalog-select span {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .8px;
+  text-transform: uppercase
+}
+
+.catalog-select select {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  color: var(--text);
+  background: transparent;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer
+}
+
 .catalog-filter,
 .catalog-clear {
   min-height: 43px;
@@ -2200,6 +2230,52 @@ body.admin-authenticated .admin-only {
 .catalog-clear {
   color: var(--muted);
   background: transparent
+}
+
+.product-groups {
+  display: grid;
+  gap: 38px
+}
+
+.product-category-group {
+  min-width: 0
+}
+
+.product-category-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 15px;
+  padding-bottom: 11px;
+  border-bottom: 1px solid var(--line)
+}
+
+.product-category-heading span,
+.product-category {
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1.4px;
+  text-transform: uppercase
+}
+
+.product-category-heading h3 {
+  margin-top: 2px;
+  color: var(--blue2);
+  font-size: 32px;
+  line-height: 1
+}
+
+.product-category-heading strong {
+  color: var(--muted);
+  font-size: 11px
+}
+
+.product-category {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--blue2)
 }
 
 .catalog-empty {
@@ -2508,6 +2584,15 @@ body.admin-authenticated .admin-only {
     grid-column: 1 / -1
   }
 
+  .catalog-filter,
+  .catalog-clear {
+    width: 100%
+  }
+
+  .product-groups {
+    gap: 30px
+  }
+
   .about-values {
     grid-template-columns: 1fr
   }
@@ -2528,6 +2613,19 @@ body.admin-authenticated .admin-only {
 
   .catalog-search {
     grid-column: auto
+  }
+
+  .product-category-heading {
+    align-items: flex-start
+  }
+
+  .product-category-heading h3 {
+    font-size: 29px
+  }
+
+  .product-category-heading strong {
+    padding-top: 5px;
+    white-space: nowrap
   }
 
   .about-copy {
