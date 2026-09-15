@@ -20,7 +20,7 @@
       href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Montserrat:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=20260914-cms2" />
+    <link rel="stylesheet" href="styles.css?v=20260915-features" />
   </head>
   <body>
     <div class="topbar">
@@ -49,8 +49,8 @@
           >
         </nav>
         <div class="header-actions">
-          <button class="icon" aria-label="Buscar">⌕</button
-          ><button class="icon" aria-label="Favoritos">♡</button
+          <button class="icon" id="searchBtn" type="button" aria-label="Buscar produtos" title="Buscar produtos">⌕</button
+          ><button class="icon" id="favoritesBtn" type="button" aria-label="Ver favoritos" title="Ver favoritos">♡<span class="icon-count" id="favoriteCount">0</span></button
           ><button id="cartBtn" class="btn btn-primary">
             💬 Pedir pelo WhatsApp <span class="count" id="cartCount">0</span>
           </button>
@@ -154,9 +154,17 @@
           <h2>Produtos em Destaque</h2>
           <a href="#admin" class="admin-only">Gerenciar catálogo →</a>
         </div>
+        <div class="catalog-tools" id="catalogTools">
+          <label class="catalog-search">
+            <span>⌕</span>
+            <input id="catalogSearch" type="search" placeholder="Buscar por nome, descrição ou categoria" autocomplete="off" />
+          </label>
+          <button class="catalog-filter" id="favoritesFilter" type="button">♡ Somente favoritos</button>
+          <button class="catalog-clear" id="clearCatalogFilters" type="button">Limpar filtros</button>
+        </div>
         <div class="product-grid" id="productGrid"></div>
       </section>
-      <section class="section" id="sobre">
+      <section class="section" id="como-comprar">
         <div class="buy-panel">
           <div>
             <h2>Como comprar?</h2>
@@ -188,6 +196,36 @@
           </div>
         </div>
       </section>
+
+      <section class="section about-section" id="sobre">
+        <div class="about-grid">
+          <div class="about-copy">
+            <p class="eyebrow">NOSSA HISTÓRIA</p>
+            <h2>Fé transformada em cada detalhe</h2>
+            <p class="about-lead">
+              A Toque de Maria nasceu do desejo de evangelizar através de peças
+              que carregam significado, delicadeza e devoção.
+            </p>
+            <p class="about-description">
+              Cada criação é preparada com cuidado para acompanhar momentos de
+              oração, celebrações e histórias especiais. Mais que produtos,
+              entregamos lembranças que aproximam o coração de Deus e de Nossa Senhora.
+            </p>
+            <div class="about-values">
+              <div><strong>Feito com cuidado</strong><span>Carinho presente em cada acabamento.</span></div>
+              <div><strong>Fé que inspira</strong><span>Peças criadas para evangelizar.</span></div>
+              <div><strong>Único para você</strong><span>Personalização para cada história.</span></div>
+            </div>
+          </div>
+          <aside class="about-manifesto">
+            <span class="about-mark">TM</span>
+            <p>TOQUE DE MARIA</p>
+            <blockquote>“Mais que produtos,<br>é evangelização.”</blockquote>
+            <small>Um toque de fé em cada detalhe</small>
+          </aside>
+        </div>
+      </section>
+
       <section class="section" id="personalizados">
         <div class="custom">
           <div class="custom-copy">
@@ -398,6 +436,10 @@
       </div>
       <div class="cart-items" id="cartItems"></div>
       <div class="cart-footer">
+        <div class="cart-total">
+          <span>Total do pedido</span>
+          <strong id="cartTotal">R$ 0,00</strong>
+        </div>
         <label>Observações<textarea id="notes" rows="3"></textarea></label
         ><button class="btn btn-primary" id="checkout">
           Finalizar no WhatsApp
@@ -452,14 +494,25 @@
         {key:'category_personalizados_title',label:'Personalizados: título',selector:'.category-card:nth-child(3) .category-copy h3'},
         {key:'category_personalizados_description',label:'Personalizados: legenda abaixo do card',selector:'.category-card:nth-child(3) .category-copy p',multiline:true},
         {key:'catalog_title',label:'Título do catálogo',selector:'#catalogo .section-head h2'},
-        {key:'buy_title',label:'Como comprar: título',selector:'#sobre .buy-panel > div:first-child h2'},
-        {key:'buy_subtitle',label:'Como comprar: legenda',selector:'#sobre .buy-panel > div:first-child p'},
-        {key:'step_1_title',label:'Passo 1: título',selector:'#sobre .step:nth-child(2) h3'},
-        {key:'step_1_description',label:'Passo 1: descrição',selector:'#sobre .step:nth-child(2) p',multiline:true},
-        {key:'step_2_title',label:'Passo 2: título',selector:'#sobre .step:nth-child(3) h3'},
-        {key:'step_2_description',label:'Passo 2: descrição',selector:'#sobre .step:nth-child(3) p',multiline:true},
-        {key:'step_3_title',label:'Passo 3: título',selector:'#sobre .step:nth-child(4) h3'},
-        {key:'step_3_description',label:'Passo 3: descrição',selector:'#sobre .step:nth-child(4) p',multiline:true},
+        {key:'buy_title',label:'Como comprar: título',selector:'#como-comprar .buy-panel > div:first-child h2'},
+        {key:'buy_subtitle',label:'Como comprar: legenda',selector:'#como-comprar .buy-panel > div:first-child p'},
+        {key:'step_1_title',label:'Passo 1: título',selector:'#como-comprar .step:nth-child(2) h3'},
+        {key:'step_1_description',label:'Passo 1: descrição',selector:'#como-comprar .step:nth-child(2) p',multiline:true},
+        {key:'step_2_title',label:'Passo 2: título',selector:'#como-comprar .step:nth-child(3) h3'},
+        {key:'step_2_description',label:'Passo 2: descrição',selector:'#como-comprar .step:nth-child(3) p',multiline:true},
+        {key:'step_3_title',label:'Passo 3: título',selector:'#como-comprar .step:nth-child(4) h3'},
+        {key:'step_3_description',label:'Passo 3: descrição',selector:'#como-comprar .step:nth-child(4) p',multiline:true},
+        {key:'about_eyebrow',label:'Sobre nós: destaque',selector:'#sobre .about-copy .eyebrow'},
+        {key:'about_title',label:'Sobre nós: título',selector:'#sobre .about-copy h2'},
+        {key:'about_lead',label:'Sobre nós: primeiro texto',selector:'#sobre .about-lead',multiline:true},
+        {key:'about_description',label:'Sobre nós: segundo texto',selector:'#sobre .about-description',multiline:true},
+        {key:'about_value_1_title',label:'Sobre nós: valor 1',selector:'#sobre .about-values > div:nth-child(1) strong'},
+        {key:'about_value_1_text',label:'Sobre nós: descrição do valor 1',selector:'#sobre .about-values > div:nth-child(1) span'},
+        {key:'about_value_2_title',label:'Sobre nós: valor 2',selector:'#sobre .about-values > div:nth-child(2) strong'},
+        {key:'about_value_2_text',label:'Sobre nós: descrição do valor 2',selector:'#sobre .about-values > div:nth-child(2) span'},
+        {key:'about_value_3_title',label:'Sobre nós: valor 3',selector:'#sobre .about-values > div:nth-child(3) strong'},
+        {key:'about_value_3_text',label:'Sobre nós: descrição do valor 3',selector:'#sobre .about-values > div:nth-child(3) span'},
+        {key:'about_quote',label:'Sobre nós: frase de destaque',selector:'#sobre .about-manifesto blockquote',multiline:true},
         {key:'custom_eyebrow',label:'Personalizados: destaque',selector:'#personalizados .custom-copy .eyebrow'},
         {key:'custom_title',label:'Personalizados: título da seção',selector:'#personalizados .custom-copy h2'},
         {key:'custom_description',label:'Personalizados: descrição',selector:'#personalizados .custom-copy > p:not(.eyebrow)',multiline:true},
@@ -526,6 +579,9 @@
       let products = loadProducts();
       let cart = [];
       let editingImage = '';
+      let catalogQuery = '';
+      let favoritesOnly = false;
+      let favorites = new Set(JSON.parse(localStorage.getItem('tm_favorites_v1') || '[]').map(String));
 
       function esc(value = '') {
         return String(value).replace(/[&<>"']/g, (char) => ({
@@ -806,12 +862,23 @@
       }
 
       function renderProducts() {
-        $('#productGrid').innerHTML = products.map((p) => `
+        const normalizedQuery = catalogQuery.trim().toLocaleLowerCase('pt-BR');
+        const visibleProducts = products.filter((product) => {
+          const searchable = `${product.name} ${product.desc} ${product.cat}`.toLocaleLowerCase('pt-BR');
+          return (!normalizedQuery || searchable.includes(normalizedQuery))
+            && (!favoritesOnly || favorites.has(String(product.id)));
+        });
+
+        $('#favoriteCount').textContent = favorites.size;
+        $('#favoritesBtn').classList.toggle('active', favoritesOnly);
+        $('#favoritesFilter').classList.toggle('active', favoritesOnly);
+
+        $('#productGrid').innerHTML = visibleProducts.length ? visibleProducts.map((p) => `
           <article class="product">
             <div class="product-img ${p.image ? 'has-image' : ''}">
               ${p.image ? `<img src="${p.image}" alt="${esc(p.name)}" loading="lazy">` : ''}
               ${p.badge ? `<span class="badge">${esc(p.badge)}</span>` : ''}
-              <span class="heart">♡</span>
+              <button class="heart ${favorites.has(String(p.id)) ? 'active' : ''}" type="button" onclick="toggleFavorite(${p.id})" aria-label="${favorites.has(String(p.id)) ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}">${favorites.has(String(p.id)) ? '♥' : '♡'}</button>
             </div>
             <div class="product-body">
               <h3>${esc(p.name)}</h3>
@@ -827,8 +894,19 @@
               </div>
             </div>
           </article>
-        `).join('');
+        `).join('') : `<div class="catalog-empty">
+          <span>♡</span>
+          <h3>Nenhum produto encontrado</h3>
+          <p>Ajuste a busca ou remova o filtro de favoritos.</p>
+        </div>`;
       }
+
+      window.toggleFavorite = (id) => {
+        const key = String(id);
+        favorites.has(key) ? favorites.delete(key) : favorites.add(key);
+        localStorage.setItem('tm_favorites_v1', JSON.stringify([...favorites]));
+        renderProducts();
+      };
 
       window.direct = (id) => {
         const p = products.find(x => x.id === id);
@@ -868,25 +946,54 @@ Podemos confirmar disponibilidade, prazo e entrega?`),
         renderCart();
       };
 
+      function priceToNumber(value) {
+        const cleaned = String(value || '').replace(/[^\d,.-]/g, '');
+        if (!cleaned) return 0;
+        const normalized = cleaned.includes(',')
+          ? cleaned.replace(/\./g, '').replace(',', '.')
+          : cleaned;
+        const number = Number(normalized);
+        return Number.isFinite(number) ? number : 0;
+      }
+
+      function formatMoney(value) {
+        return new Intl.NumberFormat('pt-BR', {
+          style: 'currency',
+          currency: 'BRL'
+        }).format(value);
+      }
+
+      function cartTotalValue() {
+        return cart.reduce((total, item) => total + priceToNumber(item.price) * item.qty, 0);
+      }
+
       function renderCart() {
         $('#cartCount').textContent = cart.reduce((total, item) => total + item.qty, 0);
+        $('#cartTotal').textContent = formatMoney(cartTotalValue());
 
         $('#cartItems').innerHTML = cart.length
-          ? cart.map(item => `
+          ? cart.map(item => {
+              const unitPrice = priceToNumber(item.price);
+              return `
               <div class="cart-item">
-                <div>
-                  <h4>${esc(item.name)}</h4>
-                  <p>${esc(item.desc)}</p>
-                  <p>${esc(item.price)}</p>
+                <div class="cart-item-main">
+                  ${item.image ? `<img class="cart-thumb" src="${item.image}" alt="">` : '<span class="cart-thumb cart-thumb-empty">✦</span>'}
+                  <div class="cart-item-copy">
+                    <h4>${esc(item.name)}</h4>
+                    <p>${esc(item.desc)}</p>
+                    <span class="cart-unit">${item.qty} × ${formatMoney(unitPrice)}</span>
+                    <strong class="cart-subtotal">${formatMoney(unitPrice * item.qty)}</strong>
+                  </div>
                 </div>
                 <div class="qty">
-                  <button onclick="q(${item.id}, -1)">−</button>
+                  <button onclick="q(${item.id}, -1)" aria-label="Diminuir quantidade">−</button>
                   <span>${item.qty}</span>
-                  <button onclick="q(${item.id}, 1)">+</button>
+                  <button onclick="q(${item.id}, 1)" aria-label="Aumentar quantidade">+</button>
                 </div>
               </div>
-            `).join('')
-          : '<p>Nenhum item selecionado.</p>';
+            `;
+            }).join('')
+          : '<div class="cart-empty"><span>🛍</span><p>Nenhum item selecionado.</p></div>';
       }
 
       const openCart = () => {
@@ -899,6 +1006,36 @@ Podemos confirmar disponibilidade, prazo e entrega?`),
         $('#overlay').classList.remove('open');
       };
 
+      $('#searchBtn').onclick = () => {
+        $('#catalogTools').classList.add('highlight');
+        document.querySelector('#catalogo').scrollIntoView({behavior:'smooth', block:'start'});
+        setTimeout(() => $('#catalogSearch').focus(), 450);
+      };
+
+      $('#favoritesBtn').onclick = () => {
+        favoritesOnly = !favoritesOnly;
+        renderProducts();
+        document.querySelector('#catalogo').scrollIntoView({behavior:'smooth', block:'start'});
+      };
+
+      $('#favoritesFilter').onclick = () => {
+        favoritesOnly = !favoritesOnly;
+        renderProducts();
+      };
+
+      $('#catalogSearch').addEventListener('input', (event) => {
+        catalogQuery = event.target.value;
+        renderProducts();
+      });
+
+      $('#clearCatalogFilters').onclick = () => {
+        catalogQuery = '';
+        favoritesOnly = false;
+        $('#catalogSearch').value = '';
+        $('#catalogTools').classList.remove('highlight');
+        renderProducts();
+      };
+
       $('#cartBtn').onclick = openCart;
       $('#closeCart').onclick = closeCart;
       $('#overlay').onclick = closeCart;
@@ -909,8 +1046,9 @@ Podemos confirmar disponibilidade, prazo e entrega?`),
         }
 
         const items = cart
-          .map(item => `• ${item.qty}x ${item.name}`)
+          .map(item => `• ${item.qty}x ${item.name} — ${formatMoney(priceToNumber(item.price) * item.qty)}`)
           .join('\\n');
+        const total = formatMoney(cartTotalValue());
 
         const notes = $('#notes').value.trim();
 
