@@ -2323,14 +2323,14 @@ body.admin-authenticated .admin-only {
 }
 
 .about-mark {
-  display: grid;
-  place-items: center;
+  display: block;
   width: 92px;
   height: 92px;
   z-index: 1;
-  border: 1px solid rgba(255,255,255,.55);
+  object-fit: cover;
+  border: 2px solid rgba(255,255,255,.72);
   border-radius: 50%;
-  font: 600 39px/1 'Cormorant Garamond',serif
+  box-shadow: 0 12px 30px rgba(5,30,65,.28)
 }
 
 .about-manifesto p,
