@@ -2241,6 +2241,22 @@ body.admin-authenticated .admin-only {
   min-width: 0
 }
 
+.product-category-group .product-grid {
+  grid-template-columns: repeat(3,minmax(0,1fr))
+}
+
+@media (max-width: 900px) {
+  .product-category-group .product-grid {
+    grid-template-columns: repeat(2,minmax(0,1fr))
+  }
+}
+
+@media (max-width: 620px) {
+  .product-category-group .product-grid {
+    grid-template-columns: minmax(0,1fr)
+  }
+}
+
 .product-category-heading {
   display: flex;
   align-items: end;
