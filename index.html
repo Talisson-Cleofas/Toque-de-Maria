@@ -20,7 +20,7 @@
       href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Montserrat:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=20260915-category-layout" />
+    <link rel="stylesheet" href="styles.css?v=20260915-catalog-filters" />
   </head>
   <body>
     <div class="topbar">
@@ -115,7 +115,7 @@
                 <h3>Terços</h3>
                 <p>Peças artesanais para acompanhar sua oração.</p>
               </div>
-              <a class="round-link" href="#catalogo" aria-label="Explorar terços">Explorar <span>→</span></a>
+              <a class="round-link" data-category="tercos" href="#catalogo" aria-label="Explorar terços">Explorar <span>→</span></a>
             </div>
           </article>
           <article class="category-card">
@@ -129,7 +129,7 @@
                 <h3>Artigos Religiosos</h3>
                 <p>Detalhes que tornam a fé presente no dia a dia.</p>
               </div>
-              <a class="round-link" href="#catalogo" aria-label="Explorar artigos religiosos">Explorar <span>→</span></a>
+              <a class="round-link" data-category="artigos" href="#catalogo" aria-label="Explorar artigos religiosos">Explorar <span>→</span></a>
             </div>
           </article>
           <article class="category-card">
@@ -143,7 +143,7 @@
                 <h3>Personalizados</h3>
                 <p>Presentes únicos, feitos para momentos especiais.</p>
               </div>
-              <a class="round-link" href="#personalizados" aria-label="Conhecer personalizados">Explorar <span>→</span></a>
+              <a class="round-link" data-category="personalizados" href="#catalogo" aria-label="Explorar personalizados">Explorar <span>→</span></a>
             </div>
           </article>
         </div>
@@ -159,10 +159,28 @@
             <span>⌕</span>
             <input id="catalogSearch" type="search" placeholder="Buscar por nome, descrição ou categoria" autocomplete="off" />
           </label>
+          <label class="catalog-select">
+            <span>Categoria</span>
+            <select id="categoryFilter">
+              <option value="all">Todas as categorias</option>
+              <option value="tercos">Terços</option>
+              <option value="artigos">Artigos Religiosos</option>
+              <option value="personalizados">Personalizados</option>
+            </select>
+          </label>
+          <label class="catalog-select">
+            <span>Ordenar</span>
+            <select id="sortFilter">
+              <option value="featured">Destaques</option>
+              <option value="price-asc">Menor preço</option>
+              <option value="price-desc">Maior preço</option>
+              <option value="name-asc">Nome de A a Z</option>
+            </select>
+          </label>
           <button class="catalog-filter" id="favoritesFilter" type="button">♡ Somente favoritos</button>
           <button class="catalog-clear" id="clearCatalogFilters" type="button">Limpar filtros</button>
         </div>
-        <div class="product-grid" id="productGrid"></div>
+        <div class="product-groups" id="productGrid"></div>
       </section>
       <section class="section" id="como-comprar">
         <div class="buy-panel">
@@ -580,6 +598,8 @@
       let cart = [];
       let editingImage = '';
       let catalogQuery = '';
+      let catalogCategory = 'all';
+      let catalogSort = 'featured';
       let favoritesOnly = false;
       let favorites = new Set(JSON.parse(localStorage.getItem('tm_favorites_v1') || '[]').map(String));
 
@@ -595,6 +615,15 @@
 
       function wa(message) {
         return `https://wa.me/${WA}?text=${encodeURIComponent(message)}`;
+      }
+
+      function categoryLabel(category) {
+        const labels = {
+          tercos: 'Terços',
+          artigos: 'Artigos Religiosos',
+          personalizados: 'Personalizados'
+        };
+        return labels[category] || String(category || 'Outros');
       }
 
       function saveProducts() {
@@ -861,26 +890,17 @@
         });
       }
 
-      function renderProducts() {
-        const normalizedQuery = catalogQuery.trim().toLocaleLowerCase('pt-BR');
-        const visibleProducts = products.filter((product) => {
-          const searchable = `${product.name} ${product.desc} ${product.cat}`.toLocaleLowerCase('pt-BR');
-          return (!normalizedQuery || searchable.includes(normalizedQuery))
-            && (!favoritesOnly || favorites.has(String(product.id)));
-        });
-
-        $('#favoriteCount').textContent = favorites.size;
-        $('#favoritesBtn').classList.toggle('active', favoritesOnly);
-        $('#favoritesFilter').classList.toggle('active', favoritesOnly);
-
-        $('#productGrid').innerHTML = visibleProducts.length ? visibleProducts.map((p) => `
+      function productCardTemplate(p) {
+        const isFavorite = favorites.has(String(p.id));
+        return `
           <article class="product">
             <div class="product-img ${p.image ? 'has-image' : ''}">
               ${p.image ? `<img src="${p.image}" alt="${esc(p.name)}" loading="lazy">` : ''}
               ${p.badge ? `<span class="badge">${esc(p.badge)}</span>` : ''}
-              <button class="heart ${favorites.has(String(p.id)) ? 'active' : ''}" type="button" onclick="toggleFavorite(${p.id})" aria-label="${favorites.has(String(p.id)) ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}">${favorites.has(String(p.id)) ? '♥' : '♡'}</button>
+              <button class="heart ${isFavorite ? 'active' : ''}" type="button" onclick="toggleFavorite(${p.id})" aria-label="${isFavorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}">${isFavorite ? '♥' : '♡'}</button>
             </div>
             <div class="product-body">
+              <span class="product-category">${esc(categoryLabel(p.cat))}</span>
               <h3>${esc(p.name)}</h3>
               <p>${esc(p.desc)}</p>
               <div class="price">${esc(p.price)}</div>
@@ -894,11 +914,72 @@
               </div>
             </div>
           </article>
-        `).join('') : `<div class="catalog-empty">
-          <span>♡</span>
-          <h3>Nenhum produto encontrado</h3>
-          <p>Ajuste a busca ou remova o filtro de favoritos.</p>
-        </div>`;
+        `;
+      }
+
+      function renderProducts() {
+        const normalizedQuery = catalogQuery.trim().toLocaleLowerCase('pt-BR');
+        const categoryOrder = ['tercos', 'artigos', 'personalizados'];
+
+        const visibleProducts = products
+          .filter((product) => {
+            const searchable = `${product.name} ${product.desc} ${product.cat} ${categoryLabel(product.cat)}`.toLocaleLowerCase('pt-BR');
+            return (!normalizedQuery || searchable.includes(normalizedQuery))
+              && (catalogCategory === 'all' || product.cat === catalogCategory)
+              && (!favoritesOnly || favorites.has(String(product.id)));
+          })
+          .map((product, originalIndex) => ({ product, originalIndex }))
+          .sort((a, b) => {
+            if (catalogSort === 'price-asc') return priceToNumber(a.product.price) - priceToNumber(b.product.price);
+            if (catalogSort === 'price-desc') return priceToNumber(b.product.price) - priceToNumber(a.product.price);
+            if (catalogSort === 'name-asc') return a.product.name.localeCompare(b.product.name, 'pt-BR');
+            return a.originalIndex - b.originalIndex;
+          })
+          .map(({ product }) => product);
+
+        $('#favoriteCount').textContent = favorites.size;
+        $('#favoritesBtn').classList.toggle('active', favoritesOnly);
+        $('#favoritesFilter').classList.toggle('active', favoritesOnly);
+
+        if (!visibleProducts.length) {
+          $('#productGrid').innerHTML = `<div class="catalog-empty">
+            <span>⌕</span>
+            <h3>Nenhum produto encontrado</h3>
+            <p>Ajuste a busca, a categoria, a ordenação ou o filtro de favoritos.</p>
+          </div>`;
+          return;
+        }
+
+        const groupedProducts = visibleProducts.reduce((groups, product) => {
+          const category = product.cat || 'outros';
+          if (!groups[category]) groups[category] = [];
+          groups[category].push(product);
+          return groups;
+        }, {});
+
+        const orderedCategories = [
+          ...categoryOrder.filter(category => groupedProducts[category]),
+          ...Object.keys(groupedProducts).filter(category => !categoryOrder.includes(category))
+        ];
+
+        $('#productGrid').innerHTML = orderedCategories.map((category) => {
+          const categoryProducts = groupedProducts[category];
+          const countLabel = `${categoryProducts.length} ${categoryProducts.length === 1 ? 'produto' : 'produtos'}`;
+          return `
+            <section class="product-category-group" data-product-category="${esc(category)}">
+              <div class="product-category-heading">
+                <div>
+                  <span>Categoria</span>
+                  <h3>${esc(categoryLabel(category))}</h3>
+                </div>
+                <strong>${countLabel}</strong>
+              </div>
+              <div class="product-grid">
+                ${categoryProducts.map(productCardTemplate).join('')}
+              </div>
+            </section>
+          `;
+        }).join('');
       }
 
       window.toggleFavorite = (id) => {
@@ -915,8 +996,9 @@
         window.open(
           wa(`Olá! Vim pelo site da Toque de Maria e gostaria de pedir:
 
-• ${p.name} - ${p.desc}
-${p.price}
+Produto: ${p.name}
+Categoria: ${categoryLabel(p.cat)}
+Preço: ${formatMoney(priceToNumber(p.price))}
 
 Podemos confirmar disponibilidade, prazo e entrega?`),
           '_blank'
@@ -1028,10 +1110,32 @@ Podemos confirmar disponibilidade, prazo e entrega?`),
         renderProducts();
       });
 
+      $('#categoryFilter').addEventListener('change', (event) => {
+        catalogCategory = event.target.value;
+        renderProducts();
+      });
+
+      $('#sortFilter').addEventListener('change', (event) => {
+        catalogSort = event.target.value;
+        renderProducts();
+      });
+
+      document.querySelectorAll('.round-link[data-category]').forEach((link) => {
+        link.addEventListener('click', () => {
+          catalogCategory = link.dataset.category;
+          $('#categoryFilter').value = catalogCategory;
+          renderProducts();
+        });
+      });
+
       $('#clearCatalogFilters').onclick = () => {
         catalogQuery = '';
+        catalogCategory = 'all';
+        catalogSort = 'featured';
         favoritesOnly = false;
         $('#catalogSearch').value = '';
+        $('#categoryFilter').value = 'all';
+        $('#sortFilter').value = 'featured';
         $('#catalogTools').classList.remove('highlight');
         renderProducts();
       };
@@ -1046,7 +1150,10 @@ Podemos confirmar disponibilidade, prazo e entrega?`),
         }
 
         const items = cart
-          .map(item => `• ${item.qty}x ${item.name} — ${formatMoney(priceToNumber(item.price) * item.qty)}`)
+          .map(item => `• ${item.qty}x ${item.name}
+  Categoria: ${categoryLabel(item.cat)}
+  Preço unitário: ${formatMoney(priceToNumber(item.price))}
+  Subtotal: ${formatMoney(priceToNumber(item.price) * item.qty)}`)
           .join('\\n');
         const total = formatMoney(cartTotalValue());
 
